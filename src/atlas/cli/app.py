@@ -5,6 +5,7 @@ from typing import Annotated
 
 import typer
 
+from atlas.core.doctor import check_dependencies
 from atlas.core.filesystem import create_project, load_project_config
 from atlas.core.status import project_status
 from atlas.depth import run_depth
@@ -26,6 +27,16 @@ app.add_typer(depth_app, name="depth")
 app.add_typer(semantics_app, name="semantics")
 app.add_typer(graph_app, name="graph")
 app.add_typer(viewer_app, name="viewer")
+
+
+@app.command("doctor")
+def doctor() -> None:
+    """Check local tools needed for the Atlas MVP pipeline."""
+    for check in check_dependencies():
+        marker = "ok" if check.available else "missing"
+        typer.echo(f"{check.name}: {marker} - {check.detail}")
+        if not check.available:
+            typer.echo(f"  install: {check.install_hint}")
 
 
 @app.command("init")

@@ -53,6 +53,7 @@ Implementation direction:
 - Use `feature_extractor -> sequential_matcher -> mapper -> model_converter`.
 - Add a dry-run/helper path for testing command construction without requiring COLMAP.
 - Export camera poses into Atlas schemas so later stages do not need COLMAP internals.
+- Use `atlas doctor` before real runs to check COLMAP, Nerfstudio, ffmpeg, viewer extras, and CUDA availability.
 
 ### 3. Splat Adapter
 
