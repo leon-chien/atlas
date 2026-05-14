@@ -12,6 +12,7 @@ from atlas.depth import run_depth
 from atlas.graph import build_scene_graph
 from atlas.reconstruction import run_colmap_poses
 from atlas.semantics import run_semantics
+from atlas.splats import run_splat_reconstruction
 from atlas.video import ingest_video
 from atlas.viewer import open_viewer
 
@@ -20,12 +21,14 @@ reconstruct_app = typer.Typer(help="Pose and geometry reconstruction commands.")
 depth_app = typer.Typer(help="Dense depth estimation commands.")
 semantics_app = typer.Typer(help="Object detection, segmentation, and embedding commands.")
 graph_app = typer.Typer(help="Persistent scene graph commands.")
+splats_app = typer.Typer(help="Gaussian splat reconstruction commands.")
 viewer_app = typer.Typer(help="Interactive preview commands.")
 
 app.add_typer(reconstruct_app, name="reconstruct")
 app.add_typer(depth_app, name="depth")
 app.add_typer(semantics_app, name="semantics")
 app.add_typer(graph_app, name="graph")
+app.add_typer(splats_app, name="splats")
 app.add_typer(viewer_app, name="viewer")
 
 
@@ -106,6 +109,29 @@ def semantics_run(project: Annotated[Path, typer.Option("--project", "-p")]) -> 
 def graph_build(project: Annotated[Path, typer.Option("--project", "-p")]) -> None:
     """Lift semantic observations into a persistent scene graph."""
     build_scene_graph(project)
+
+
+@splats_app.command("train")
+def splats_train(
+    project: Annotated[Path, typer.Option("--project", "-p")],
+    backend: Annotated[str, typer.Option("--backend")] = "nerfstudio-splatfacto",
+    dry_run: Annotated[bool, typer.Option("--dry-run")] = False,
+    ns_train_bin: Annotated[str, typer.Option("--ns-train-bin")] = "ns-train",
+    ns_export_bin: Annotated[str, typer.Option("--ns-export-bin")] = "ns-export",
+) -> None:
+    """Train/export Gaussian splats using an external trainer."""
+    commands = run_splat_reconstruction(
+        project,
+        backend=backend,
+        dry_run=dry_run,
+        ns_train_bin=ns_train_bin,
+        ns_export_bin=ns_export_bin,
+    )
+    if dry_run:
+        typer.echo(" ".join(commands.train))
+        typer.echo(" ".join(commands.export))
+    else:
+        typer.echo(f"Exported splat world into {project / 'splats'}")
 
 
 @viewer_app.command("open")

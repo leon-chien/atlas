@@ -46,6 +46,7 @@ atlas init runs/desk_scan
 atlas ingest path/to/video.mp4 --project runs/desk_scan --sample-fps 2 --max-frames 180
 atlas doctor
 atlas reconstruct poses --project runs/desk_scan --dry-run
+atlas splats train --project runs/desk_scan --dry-run
 atlas status runs/desk_scan
 ```
 

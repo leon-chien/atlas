@@ -66,6 +66,14 @@ Outputs:
 
 Do not implement a custom splat trainer in the MVP.
 
+Current command target:
+
+```bash
+atlas splats train --project runs/desk_scan --backend nerfstudio-splatfacto
+```
+
+Use `--dry-run` locally until Nerfstudio and CUDA are available.
+
 ### 4. Viewer
 
 Implement `atlas viewer open --project PROJECT_DIR` with `viser`.

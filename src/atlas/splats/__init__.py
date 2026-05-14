@@ -1,3 +1,3 @@
-from atlas.splats.backends import run_splat_reconstruction
+from atlas.splats.backends import build_nerfstudio_commands, run_splat_reconstruction
 
-__all__ = ["run_splat_reconstruction"]
+__all__ = ["build_nerfstudio_commands", "run_splat_reconstruction"]
