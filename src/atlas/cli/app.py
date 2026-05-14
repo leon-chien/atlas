@@ -135,6 +135,14 @@ def splats_train(
 
 
 @viewer_app.command("open")
-def viewer_open(project: Annotated[Path, typer.Option("--project", "-p")]) -> None:
+def viewer_open(
+    project: Annotated[Path, typer.Option("--project", "-p")],
+    dry_run: Annotated[bool, typer.Option("--dry-run")] = False,
+) -> None:
     """Open an interactive Atlas project viewer."""
-    open_viewer(project)
+    summary = open_viewer(project, dry_run=dry_run)
+    if dry_run:
+        typer.echo(f"cameras: {summary.cameras}")
+        typer.echo(f"sparse_point_cloud: {summary.sparse_point_cloud or 'missing'}")
+        typer.echo(f"splat_world: {summary.splat_world or 'missing'}")
+        typer.echo(f"scene_graph: {summary.scene_graph or 'missing'}")

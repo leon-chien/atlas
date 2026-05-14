@@ -85,6 +85,8 @@ First viewer targets:
 - splat file when present
 - basic object boxes once graph data exists
 
+Use `--dry-run` to summarize available camera, point cloud, splat, and graph artifacts when `viser` is not installed.
+
 ### 5. Semantics And Scene Graph
 
 After reconstruction and viewer are usable, add semantic lifting:

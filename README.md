@@ -47,6 +47,7 @@ atlas ingest path/to/video.mp4 --project runs/desk_scan --sample-fps 2 --max-fra
 atlas doctor
 atlas reconstruct poses --project runs/desk_scan --dry-run
 atlas splats train --project runs/desk_scan --dry-run
+atlas viewer open --project runs/desk_scan --dry-run
 atlas status runs/desk_scan
 ```
 
