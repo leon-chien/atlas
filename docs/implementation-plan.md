@@ -130,3 +130,5 @@ Each milestone should finish with:
 - `atlas status` reflecting the stage
 - one smoke test or dry-run test proving the command boundary works
 - docs updated only when the user-facing workflow changes
+
+Current end-to-end instructions live in `docs/mvp-workflow.md`.

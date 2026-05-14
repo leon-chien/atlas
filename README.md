@@ -58,6 +58,10 @@ raise clear `NotImplementedError` messages until their adapters are implemented.
 
 See [docs/architecture.md](docs/architecture.md).
 
+## MVP Workflow
+
+See [docs/mvp-workflow.md](docs/mvp-workflow.md) for the current end-to-end path from phone video to reconstruction, splats, and viewer.
+
 ## Project Memory
 
 - [agent.md](agent.md) keeps persistent guidance for future coding agents.
