@@ -51,6 +51,8 @@ Implementation direction:
 
 - Prefer the COLMAP CLI first because it is easy to inspect and reproduce.
 - Use `feature_extractor -> sequential_matcher -> mapper -> model_converter`.
+- Use `--matcher exhaustive` for small scans when sequential matching registers too few cameras.
+- Export the largest COLMAP sparse model rather than assuming `sparse/0` is the best component.
 - Add a dry-run/helper path for testing command construction without requiring COLMAP.
 - Export camera poses into Atlas schemas so later stages do not need COLMAP internals.
 - Use `atlas doctor` before real runs to check COLMAP, Nerfstudio, ffmpeg, viewer extras, and CUDA availability.

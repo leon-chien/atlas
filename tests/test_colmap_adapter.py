@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from atlas.reconstruction.colmap import build_colmap_commands, parse_colmap_cameras
+from atlas.reconstruction.colmap import (
+    build_colmap_commands,
+    parse_colmap_cameras,
+    select_largest_sparse_model,
+)
 
 
 def test_colmap_command_builder_uses_sequential_video_flow(tmp_path):
@@ -15,6 +19,12 @@ def test_colmap_command_builder_uses_sequential_video_flow(tmp_path):
         "model_converter",
     ]
     assert "--ImageReader.single_camera" in commands[0]
+
+
+def test_colmap_command_builder_supports_exhaustive_matching(tmp_path):
+    commands = build_colmap_commands(tmp_path / "scan", matcher="exhaustive")
+
+    assert commands[1][1] == "exhaustive_matcher"
 
 
 def test_parse_colmap_text_model_exports_camera_pose(tmp_path):
@@ -39,3 +49,17 @@ def test_parse_colmap_text_model_exports_camera_pose(tmp_path):
     assert poses[0].intrinsics.fx == 500
     assert poses[0].intrinsics.fy == 510
     assert poses[0].world_to_camera[0][3] == 0.1
+
+
+def test_select_largest_sparse_model(tmp_path):
+    sparse = tmp_path / "sparse"
+    small = sparse / "0"
+    large = sparse / "1"
+    small.mkdir(parents=True)
+    large.mkdir(parents=True)
+    (small / "images.bin").write_bytes(b"1")
+    (small / "points3D.bin").write_bytes(b"1")
+    (large / "images.bin").write_bytes(b"12345")
+    (large / "points3D.bin").write_bytes(b"12345")
+
+    assert select_largest_sparse_model(sparse) == large

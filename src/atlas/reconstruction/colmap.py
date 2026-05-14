@@ -15,7 +15,6 @@ from atlas.core.schemas import CameraIntrinsics, CameraPose, StageManifest, Stag
 class ColmapWorkspace:
     database: Path
     sparse: Path
-    sparse_model: Path
     sparse_txt: Path
     point_cloud: Path
     cameras: Path
@@ -28,7 +27,6 @@ def colmap_workspace(project_dir: Path) -> ColmapWorkspace:
     return ColmapWorkspace(
         database=root / "database.db",
         sparse=root / "sparse",
-        sparse_model=root / "sparse" / "0",
         sparse_txt=root / "sparse_txt",
         point_cloud=paths.reconstruction_dir / "sparse_point_cloud.ply",
         cameras=paths.reconstruction_dir / "cameras.json",
@@ -36,9 +34,14 @@ def colmap_workspace(project_dir: Path) -> ColmapWorkspace:
     )
 
 
-def build_colmap_commands(project_dir: Path, colmap_bin: str = "colmap") -> list[list[str]]:
+def build_colmap_commands(
+    project_dir: Path,
+    colmap_bin: str = "colmap",
+    matcher: str = "sequential",
+) -> list[list[str]]:
     paths = AtlasProjectPaths(project_dir)
     workspace = colmap_workspace(project_dir)
+    matcher_command = _matcher_command(matcher)
     return [
         [
             colmap_bin,
@@ -52,7 +55,7 @@ def build_colmap_commands(project_dir: Path, colmap_bin: str = "colmap") -> list
         ],
         [
             colmap_bin,
-            "sequential_matcher",
+            matcher_command,
             "--database_path",
             str(workspace.database),
         ],
@@ -70,7 +73,7 @@ def build_colmap_commands(project_dir: Path, colmap_bin: str = "colmap") -> list
             colmap_bin,
             "model_converter",
             "--input_path",
-            str(workspace.sparse_model),
+            str(workspace.sparse / "0"),
             "--output_path",
             str(workspace.sparse_txt),
             "--output_type",
@@ -80,7 +83,7 @@ def build_colmap_commands(project_dir: Path, colmap_bin: str = "colmap") -> list
             colmap_bin,
             "model_converter",
             "--input_path",
-            str(workspace.sparse_model),
+            str(workspace.sparse / "0"),
             "--output_path",
             str(workspace.point_cloud),
             "--output_type",
@@ -94,13 +97,14 @@ def run_colmap_poses(
     backend: str = "colmap",
     dry_run: bool = False,
     colmap_bin: str = "colmap",
+    matcher: str = "sequential",
 ) -> list[list[str]]:
     if backend != "colmap":
         raise ValueError(f"Unsupported reconstruction backend: {backend}")
 
     paths = AtlasProjectPaths(project_dir)
     workspace = colmap_workspace(project_dir)
-    commands = build_colmap_commands(project_dir, colmap_bin=colmap_bin)
+    commands = build_colmap_commands(project_dir, colmap_bin=colmap_bin, matcher=matcher)
 
     if dry_run:
         return commands
@@ -116,13 +120,13 @@ def run_colmap_poses(
     workspace.sparse_txt.mkdir(parents=True, exist_ok=True)
     paths.reconstruction_dir.mkdir(parents=True, exist_ok=True)
 
-    for command in commands:
+    for command in commands[:3]:
         subprocess.run(command, check=True)
 
-    if not workspace.sparse_model.exists():
-        raise RuntimeError(
-            f"COLMAP did not produce expected sparse model at {workspace.sparse_model}"
-        )
+    sparse_model = select_largest_sparse_model(workspace.sparse)
+    converter_commands = _converter_commands(colmap_bin, sparse_model, workspace)
+    for command in converter_commands:
+        subprocess.run(command, check=True)
 
     poses = parse_colmap_cameras(workspace.sparse_txt)
     write_json(workspace.cameras, [pose.model_dump(mode="json") for pose in poses])
@@ -140,10 +144,28 @@ def run_colmap_poses(
                 str(workspace.point_cloud.relative_to(paths.root)),
             ],
             status=StageStatus.complete,
-            message=f"Reconstructed {len(poses)} camera poses with COLMAP.",
+            message=(
+                f"Reconstructed {len(poses)} camera poses with COLMAP "
+                f"using {matcher} matching and sparse model {sparse_model.name}."
+            ),
         ).model_dump(mode="json"),
     )
-    return commands
+    return [*commands[:3], *converter_commands]
+
+
+def select_largest_sparse_model(sparse_dir: Path) -> Path:
+    candidates = [path for path in sparse_dir.iterdir() if path.is_dir()]
+    scored: list[tuple[int, Path]] = []
+    for candidate in candidates:
+        images = candidate / "images.bin"
+        points = candidate / "points3D.bin"
+        if images.exists() and points.exists():
+            scored.append((images.stat().st_size + points.stat().st_size, candidate))
+
+    if not scored:
+        raise RuntimeError(f"COLMAP did not produce a sparse model under {sparse_dir}")
+
+    return max(scored, key=lambda item: item[0])[1]
 
 
 def parse_colmap_cameras(model_txt_dir: Path) -> list[CameraPose]:
@@ -209,6 +231,45 @@ def _read_cameras(cameras_path: Path) -> dict[int, CameraIntrinsics]:
                 height=height,
             )
     return cameras
+
+
+def _matcher_command(matcher: str) -> str:
+    matchers = {
+        "sequential": "sequential_matcher",
+        "exhaustive": "exhaustive_matcher",
+    }
+    if matcher not in matchers:
+        raise ValueError(f"Unsupported COLMAP matcher: {matcher}")
+    return matchers[matcher]
+
+
+def _converter_commands(
+    colmap_bin: str,
+    sparse_model: Path,
+    workspace: ColmapWorkspace,
+) -> list[list[str]]:
+    return [
+        [
+            colmap_bin,
+            "model_converter",
+            "--input_path",
+            str(sparse_model),
+            "--output_path",
+            str(workspace.sparse_txt),
+            "--output_type",
+            "TXT",
+        ],
+        [
+            colmap_bin,
+            "model_converter",
+            "--input_path",
+            str(sparse_model),
+            "--output_path",
+            str(workspace.point_cloud),
+            "--output_type",
+            "PLY",
+        ],
+    ]
 
 
 def _intrinsics_from_colmap_params(

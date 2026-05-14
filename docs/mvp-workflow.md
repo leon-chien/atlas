@@ -52,6 +52,12 @@ atlas reconstruct poses --project runs/desk_scan
 atlas status runs/desk_scan
 ```
 
+If the default sequential matcher registers too few cameras, try the exhaustive matcher:
+
+```bash
+atlas reconstruct poses --project runs/desk_scan --matcher exhaustive
+```
+
 Expected outputs:
 
 - `reconstruction/cameras.json`

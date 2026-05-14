@@ -80,9 +80,16 @@ def reconstruct_poses(
     backend: Annotated[str, typer.Option("--backend")] = "colmap",
     dry_run: Annotated[bool, typer.Option("--dry-run")] = False,
     colmap_bin: Annotated[str, typer.Option("--colmap-bin")] = "colmap",
+    matcher: Annotated[str, typer.Option("--matcher")] = "sequential",
 ) -> None:
     """Estimate camera poses and sparse geometry."""
-    commands = run_colmap_poses(project, backend=backend, dry_run=dry_run, colmap_bin=colmap_bin)
+    commands = run_colmap_poses(
+        project,
+        backend=backend,
+        dry_run=dry_run,
+        colmap_bin=colmap_bin,
+        matcher=matcher,
+    )
     if dry_run:
         for command in commands:
             typer.echo(" ".join(command))
