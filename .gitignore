@@ -150,6 +150,7 @@ activemq-data/
 # Environments
 .env
 .envrc
+.conda/
 .venv
 env/
 venv/
@@ -216,3 +217,17 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Atlas local artifacts
+runs/
+data/
+models/
+reconstruction/colmap/
+**/reconstruction/colmap/
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.ply
+*.npz
+*.npy

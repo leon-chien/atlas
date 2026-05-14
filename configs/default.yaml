@@ -1,0 +1,15 @@
+project_name: atlas_project
+coordinate_convention: right_handed_y_up
+backends:
+  pose: colmap
+  depth: depth-anything-v2
+  semantics_detector: grounding-dino
+  semantics_segmenter: sam2
+  embedding: siglip
+  splats: nerfstudio-splatfacto
+  viewer: viser
+  navigation: astar-grid
+stage_settings:
+  ingest:
+    sample_fps: 2
+    max_frames: 180
